@@ -1,24 +1,32 @@
-import { getGrokData } from "../services/grokService.js";
+import { getGeminiData } from "../services/geminiService.js";
 import { generateImage } from "../services/imageService.js";
 
 export const generate = async (req, res) => {
   try {
-    const { topic } = req.body;
+    const { topic, style } = req.body;
 
-    // 1. Get titles + prompt from Grok
-    const grokData = await getGrokData(topic);
+    console.log("🔥 CONTROLLER HIT:", topic);
 
-    // 2. Generate thumbnail
-    const imageUrl = await generateImage(grokData.prompt);
+    let aiData = await getGeminiData(topic, style);
+
+    // 🔥 FORCE FIX
+    aiData.titles = aiData.titles.map(t =>
+      t.toLowerCase().includes(topic.toLowerCase())
+        ? t
+        : `${topic} ${t}`
+    );
+
+    aiData.prompt = `${topic}, ${aiData.prompt}`;
+
+    const image = await generateImage(topic, aiData);
 
     res.json({
-      titles: grokData.titles,
-      prompt: grokData.prompt,
-      image: imageUrl
+      ...aiData,
+      image
     });
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Something went wrong" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error generating" });
   }
 };
