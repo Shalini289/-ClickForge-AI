@@ -12,20 +12,30 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   const handleGenerate = async ({ topic, style }) => {
-  setLoading(true);
+  try {
+    const res = await generateThumbnail(topic, style);
 
-const res = await generateThumbnail(topic, style);
+    // 🔥 SAFETY CHECK
+    if (!res || !res.titles || !res.thumbnails) {
+      console.log("❌ Invalid API response:", res);
+      return;
+    }
 
-setData(res);
-setLoading(false);
-// SAVE TO FIREBASE
-await saveThumbnail({
-  topic,
-  titles: res.titles,
-  image: res.image
-});
+    setData(res);
 
-  };
+    // ✅ Save ONLY if image exists
+    if (res.best?.image) {
+      await saveThumbnail({
+        topic,
+        titles: res.titles,
+        image: res.best.image
+      });
+    }
+
+  } catch (error) {
+    console.error("❌ FRONTEND ERROR:", error);
+  }
+};
 
   return (
     <div>

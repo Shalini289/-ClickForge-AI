@@ -6,12 +6,17 @@ export default function InputBox({ onGenerate }) {
   const [topic, setTopic] = useState("");
   const [style, setStyle] = useState("mrbeast");
 
-  const handleSubmit = () => {
-    if (!topic.trim()) return alert("Enter a topic!");
-  console.log(topic);
-    onGenerate({ topic, style });
-  
-  };
+ const handleSubmit = () => {
+  console.log("BUTTON CLICKED"); // 👈 must show
+
+  if (!topic.trim()) {
+    alert("Enter a topic!");
+    return;
+  }
+
+  console.log("TOPIC:", topic);
+  onGenerate({ topic, style });
+};
 
   return (
     <div className="card">

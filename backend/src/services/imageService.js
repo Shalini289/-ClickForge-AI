@@ -1,36 +1,45 @@
+import dotenv from "dotenv";
+dotenv.config();
 import axios from "axios";
 
 export const generateImage = async (topic, data) => {
-  const prompt = `
+  try {
+    const prompt = `
 YouTube thumbnail of ${topic}
 
-STRICT:
-- ONLY show ${topic}
-- No unrelated items
-
-STYLE:
-- Bright colors
 - Close-up subject
+- Bright colors
 - High contrast
+- Viral YouTube style
 
-SCENE:
-${topic}, ${data.prompt}
+Scene: ${topic}, ${data.prompt}
 `;
 
-  const res = await axios.post(
-    "https://api.stability.ai/v1/generation/stable-diffusion-v1-6/text-to-image",
-    {
-      text_prompts: [{ text: prompt }],
-      height: 512,
-      width: 512,
-      steps: 30
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.STABILITY_API_KEY}`
+    const response = await axios.post(
+      "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
+      {
+        inputs: prompt
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.HUGGING_API_KEY}`,
+          Accept: "image/png", 
+        },
+        responseType: "arraybuffer" // 🔥 VERY IMPORTANT
       }
-    }
-  );
+    );
 
-  return `data:image/png;base64,${res.data.artifacts[0].base64}`;
+    // Convert image buffer → base64
+    const base64 = Buffer.from(response.data).toString("base64");
+
+    return `data:image/png;base64,${base64}`;
+
+  } catch (error) {
+  if (error.response?.data) {
+    const decoded = Buffer.from(error.response.data).toString("utf-8");
+    console.error("❌ ERROR:", decoded);
+  } else {
+    console.error("❌ ERROR:", error.message);
+  }
+}
 };
